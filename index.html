@@ -20,8 +20,9 @@
         th, td { border: 1px solid #444; padding: 12px 5px; text-align: center; }
         th { background: #3d3d3d; color: #4a90e2; }
         .id-input, .job-select { width: 85px; padding: 6px; background: #1a1a1a; border: 1px solid #555; color: #fff; border-radius: 4px; margin-top: 6px; font-size: 13px; text-align: center; }
+        .sub-input { width: 60px; font-size: 10px; padding: 2px; background: #333; border: 1px solid #555; color: #ff9f43; margin-top: 4px; border-radius: 2px; text-align: center; }
         .status-cell { white-space: nowrap; min-width: 120px; } 
-        input[type="checkbox"] { width: 24px; height: 24px; cursor: pointer; accent-color: #4a90e2; }
+        input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; accent-color: #4a90e2; vertical-align: middle; }
         .count-num { font-weight: bold; color: #4a90e2; font-size: 1.4em; }
         .status-ok { color: #52c41a; font-weight: bold; background: rgba(82,196,26,0.15); padding: 5px 10px; border-radius: 4px; display: inline-block; font-size: 0.95em; }
         .status-fail { color: #888; font-size: 0.95em; }
@@ -51,7 +52,7 @@
                 <label>打法備註</label>
                 <input type="text" id="stratNote" class="strategy-input" placeholder="例如：火追打法、分組減傷..." oninput="saveOtherInfo()">
             </div>
-            <button class="btn-update" style="margin-left: auto;" onclick="confirmUpdate()">更新日期 (會清空勾選)</button>
+            <button class="btn-update" style="margin-left: auto;" onclick="confirmUpdate()">更新日期 (會清空勾選與代班)</button>
         </div>
     </div>
 
@@ -78,7 +79,6 @@
         roleHeader.innerHTML = headerHtml;
     }
 
-    // 儲存成員 ID 與職業
     function saveMemberInfo() {
         roles.forEach((r, idx) => {
             localStorage.setItem(`raid-job-${idx}`, document.getElementById(`job-${idx}`).value);
@@ -86,54 +86,55 @@
         });
     }
 
-    // 儲存副本、日期、打法
     function saveOtherInfo() {
         localStorage.setItem(`raid-startDate`, document.getElementById('startDatePicker').value);
         localStorage.setItem(`raid-name`, document.getElementById('raidName').value);
         localStorage.setItem(`raid-strat`, document.getElementById('stratNote').value);
     }
 
-    // 儲存所有勾選狀態 (Checkbox)
-    function saveCheckboxes() {
-        const checks = [];
+    function saveTableState() {
+        const states = [];
         for(let i=0; i<7; i++) {
-            const rowChecks = Array.from(document.querySelectorAll(`.chk-row-${i}`)).map(cb => cb.checked);
-            checks.push(rowChecks);
+            const rowData = [];
+            roles.forEach((_, idx) => {
+                const cb = document.getElementById(`cb-${i}-${idx}`);
+                const sub = document.getElementById(`sub-${i}-${idx}`);
+                rowData.push({ checked: cb.checked, note: sub.value });
+            });
+            states.push(rowData);
         }
-        localStorage.setItem('raid-checks', JSON.stringify(checks));
+        localStorage.setItem('raid-table-states', JSON.stringify(states));
     }
 
     function loadData() {
-        // 載入成員
         roles.forEach((r, idx) => {
             document.getElementById(`job-${idx}`).value = localStorage.getItem(`raid-job-${idx}`) || "";
             document.getElementById(`id-${idx}`).value = localStorage.getItem(`raid-id-${idx}`) || "";
         });
-        // 載入備註與日期
         document.getElementById('startDatePicker').value = localStorage.getItem(`raid-startDate`) || "2026/03/28";
         document.getElementById('raidName').value = localStorage.getItem(`raid-name`) || "";
         document.getElementById('stratNote').value = localStorage.getItem(`raid-strat`) || "";
         
-        generateTableContent(true); // 帶入勾選狀態載入表格
+        generateTableContent(true);
     }
 
     function confirmUpdate() {
-        if (confirm("⚠️ 警告：這將會清除目前的『勾選狀態』並更新日期，但會保留 ID、職業、副本與打法。")) { 
-            localStorage.removeItem('raid-checks'); // 清除勾選存檔
+        if (confirm("⚠️ 警告：這將會重置班表勾選與代班 ID，但會保留隊員 ID。")) { 
+            localStorage.removeItem('raid-table-states');
             generateTableContent(false); 
         }
     }
     
-    function generateTableContent(shouldLoadChecks) {
+    function generateTableContent(shouldLoadStates) {
         const tableBody = document.getElementById('tableBody');
         const startVal = document.getElementById('startDatePicker').value;
         let startDate = new Date(startVal.replace(/\//g, '-'));
-        if (isNaN(startDate.getTime())) { alert("日期格式錯誤"); return; }
+        if (isNaN(startDate.getTime())) return;
 
-        let savedChecks = [];
-        if(shouldLoadChecks) {
-            const raw = localStorage.getItem('raid-checks');
-            if(raw) savedChecks = JSON.parse(raw);
+        let savedStates = [];
+        if(shouldLoadStates) {
+            const raw = localStorage.getItem('raid-table-states');
+            if(raw) savedStates = JSON.parse(raw);
         }
 
         tableBody.innerHTML = "";
@@ -144,13 +145,16 @@
             let isWeekend = (current.getDay() === 0 || current.getDay() === 6);
             let row = document.createElement('tr');
             
-            let checksHtml = roles.map((r, idx) => {
-                const isChecked = (savedChecks[i] && savedChecks[i][idx]) ? 'checked' : '';
-                return `<td><input type="checkbox" class="chk-row-${i}" ${isChecked} onclick="handleCheck(${i})"></td>`;
+            let cellsHtml = roles.map((r, idx) => {
+                const state = (savedStates[i] && savedStates[i][idx]) ? savedStates[i][idx] : {checked: false, note: ""};
+                return `<td>
+                    <input type="checkbox" id="cb-${i}-${idx}" ${state.checked ? 'checked' : ''} onclick="handleUpdate(${i})"><br>
+                    <input type="text" id="sub-${i}-${idx}" class="sub-input" value="${state.note}" placeholder="代班ID" oninput="handleUpdate(${i})">
+                </td>`;
             }).join('');
 
             row.innerHTML = `<td class="${isWeekend ? 'weekend' : ''}" style="font-weight:bold;">${current.getMonth() + 1}/${current.getDate()} (${dayNames[current.getDay()]})</td>
-                ${checksHtml}
+                ${cellsHtml}
                 <td><span id="count-${i}" class="count-num">0</span></td>
                 <td id="status-${i}" class="status-cell"></td>`;
             tableBody.appendChild(row);
@@ -158,13 +162,18 @@
         }
     }
 
-    function handleCheck(rowIndex) {
+    function handleUpdate(rowIndex) {
         calculate(rowIndex);
-        saveCheckboxes(); // 每次勾選都存檔
+        saveTableState();
     }
 
     function calculate(rowIndex) {
-        const count = document.querySelectorAll(`.chk-row-${rowIndex}:checked`).length;
+        let count = 0;
+        roles.forEach((_, idx) => {
+            const isChecked = document.getElementById(`cb-${rowIndex}-${idx}`).checked;
+            const hasSubstitute = document.getElementById(`sub-${rowIndex}-${idx}`).value.trim() !== "";
+            if (isChecked || hasSubstitute) count++;
+        });
         document.getElementById(`count-${rowIndex}`).innerText = count;
         const statusDisplay = document.getElementById(`status-${rowIndex}`);
         statusDisplay.innerHTML = count >= 6 ? `<span class="status-ok">✅ 準時開打</span>` : `<span class="status-fail">❌ 人數不足</span>`;
