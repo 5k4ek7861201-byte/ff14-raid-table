@@ -4,111 +4,29 @@
     <meta charset="UTF-8">
     <title>高難固定團：班表</title>
     <style>
-        body { 
-            font-family: "Microsoft JhengHei", sans-serif; 
-            background-color: #1a1a1a; 
-            color: #eee; 
-            padding: 20px; 
-            margin: 0; 
-            display: flex;
-            justify-content: center;
-        }
-        
-        .container { 
-            width: 95%;
-            max-width: 1400px; 
-            background: #262626; 
-            padding: 30px; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
+        body { font-family: "Microsoft JhengHei", sans-serif; background-color: #1a1a1a; color: #eee; padding: 20px; margin: 0; display: flex; justify-content: center; }
+        .container { width: 95%; max-width: 1400px; background: #262626; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
         h1 { color: #4a90e2; text-align: center; margin-bottom: 25px; }
-        
-        .setup-area { 
-            background: #333; 
-            padding: 18px; 
-            border-radius: 8px; 
-            margin-bottom: 25px; 
-            border-left: 5px solid #4a90e2; 
-            width: 100%;
-            box-sizing: border-box;
-        }
-        
+        .setup-area { background: #333; padding: 18px; border-radius: 8px; margin-bottom: 25px; border-left: 5px solid #4a90e2; width: 100%; box-sizing: border-box; }
         .rule-text { margin-bottom: 10px; font-weight: bold; }
         .warning-text { color: #ff4d4f; font-weight: bold; margin-top: 5px; }
-        
         .control-row { display: flex; align-items: flex-end; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
-        
         .input-group { display: flex; flex-direction: column; gap: 5px; }
         .input-group label { font-size: 0.9em; color: #aaa; }
-
-        /* 日期輸入框 */
-        .text-input { 
-            padding: 8px; 
-            border-radius: 4px; 
-            border: 1px solid #4a90e2; 
-            background: #1a1a1a; 
-            color: white; 
-            width: 120px;
-            text-align: center;
-        }
-
-        /* 副本與打法輸入框 */
-        .strategy-input {
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #555;
-            background: #1a1a1a;
-            color: #ff9f43; 
-            width: 250px;
-        }
-        
-        .table-wrapper {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-        }
-
-        table { 
-            width: 100%;
-            border-collapse: collapse; 
-            background: #222; 
-            margin: 10px 0;
-            table-layout: auto;
-        }
-        
+        .text-input { padding: 8px; border-radius: 4px; border: 1px solid #4a90e2; background: #1a1a1a; color: white; width: 120px; text-align: center; }
+        .strategy-input { padding: 8px; border-radius: 4px; border: 1px solid #555; background: #1a1a1a; color: #ff9f43; width: 250px; }
+        .table-wrapper { width: 100%; display: flex; justify-content: center; }
+        table { width: 100%; border-collapse: collapse; background: #222; margin: 10px 0; table-layout: auto; }
         th, td { border: 1px solid #444; padding: 12px 5px; text-align: center; }
         th { background: #3d3d3d; color: #4a90e2; }
-        
-        .id-input, .job-select { 
-            width: 85px; padding: 6px; background: #1a1a1a; border: 1px solid #555; 
-            color: #fff; border-radius: 4px; margin-top: 6px; font-size: 13px; text-align: center;
-        }
-        
+        .id-input, .job-select { width: 85px; padding: 6px; background: #1a1a1a; border: 1px solid #555; color: #fff; border-radius: 4px; margin-top: 6px; font-size: 13px; text-align: center; }
         .status-cell { white-space: nowrap; min-width: 120px; } 
-        
         input[type="checkbox"] { width: 24px; height: 24px; cursor: pointer; accent-color: #4a90e2; }
         .count-num { font-weight: bold; color: #4a90e2; font-size: 1.4em; }
-        
-        .status-ok { 
-            color: #52c41a; 
-            font-weight: bold; 
-            background: rgba(82,196,26,0.15); 
-            padding: 5px 10px; 
-            border-radius: 4px; 
-            display: inline-block;
-            font-size: 0.95em;
-        }
+        .status-ok { color: #52c41a; font-weight: bold; background: rgba(82,196,26,0.15); padding: 5px 10px; border-radius: 4px; display: inline-block; font-size: 0.95em; }
         .status-fail { color: #888; font-size: 0.95em; }
-        
         .weekend { color: #ff9f43; }
         .btn-update { background: #4a90e2; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; height: 38px; }
-        .btn-update:hover { background: #357abd; }
     </style>
 </head>
 <body>
@@ -123,105 +41,89 @@
         <div class="control-row">
             <div class="input-group">
                 <label>起始日期</label>
-                <input type="text" id="startDatePicker" class="text-input" value="2026/03/28" placeholder="YYYY/MM/DD">
+                <input type="text" id="startDatePicker" class="text-input" value="2026/03/28" placeholder="YYYY/MM/DD" oninput="saveData()">
             </div>
-
             <div class="input-group">
                 <label>副本名稱</label>
-                <input type="text" class="strategy-input" style="width: 150px;" placeholder="例如：絕神兵">
+                <input type="text" id="raidName" class="strategy-input" style="width: 150px;" placeholder="例如：絕神兵" oninput="saveData()">
             </div>
-            
             <div class="input-group">
                 <label>打法備註</label>
-                <input type="text" class="strategy-input" placeholder="例如：火追打法、分組減傷...">
+                <input type="text" id="stratNote" class="strategy-input" placeholder="例如：火追打法、分組減傷..." oninput="saveData()">
             </div>
-            
             <button class="btn-update" style="margin-left: auto;" onclick="confirmUpdate()">更新日期 (顯示7天)</button>
         </div>
     </div>
 
     <div class="table-wrapper">
         <table id="raidTable">
-            <thead>
-                <tr id="roleHeader"></tr>
-            </thead>
+            <thead><tr id="roleHeader"></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    const jobOptions = {
-        'Tank': ['騎士', '戰士', '黑騎', '絕槍'],
-        'Healer': ['白魔', '學者', '占星', '賢者'],
-        'DPS_Melee': ['武僧', '龍騎', '忍者', '武士', '奪魂', '毒蛇'],
-        'DPS_PhysRange': ['吟遊', '機工', '舞者'],
-        'DPS_Magic': ['黑魔', '召喚', '赤魔', '繪靈']
-    };
-
-    const roles = [
-        { label: 'MT', type: 'Tank' },
-        { label: 'ST', type: 'Tank' },
-        { label: 'H1', type: 'Healer' },
-        { label: 'H2', type: 'Healer' },
-        { label: 'D1', type: 'DPS_Melee' },
-        { label: 'D2', type: 'DPS_Melee' },
-        { label: 'D3', type: 'DPS_PhysRange' },
-        { label: 'D4', type: 'DPS_Magic' }
-    ];
+    const jobOptions = { 'Tank': ['騎士', '戰士', '黑騎', '絕槍'], 'Healer': ['白魔', '學者', '占星', '賢者'], 'DPS_Melee': ['武僧', '龍騎', '忍者', '武士', '奪魂', '毒蛇'], 'DPS_PhysRange': ['吟遊', '機工', '舞者'], 'DPS_Magic': ['黑魔', '召喚', '赤魔', '繪靈'] };
+    const roles = [{label:'MT',type:'Tank'},{label:'ST',type:'Tank'},{label:'H1',type:'Healer'},{label:'H2',type:'Healer'},{label:'D1',type:'DPS_Melee'},{label:'D2',type:'DPS_Melee'},{label:'D3',type:'DPS_PhysRange'},{label:'D4',type:'DPS_Magic'}];
 
     function initHeader() {
         const roleHeader = document.getElementById('roleHeader');
         let headerHtml = `<th>日期</th>`;
-        roles.forEach(r => {
+        roles.forEach((r, idx) => {
             let options = jobOptions[r.type].map(j => `<option value="${j}">${j}</option>`).join('');
-            headerHtml += `
-                <th>
-                    ${r.label}<br>
-                    <select class="job-select"><option value="">職業</option>${options}</select><br>
-                    <input type="text" class="id-input" placeholder="ID">
-                </th>`;
+            headerHtml += `<th>${r.label}<br><select id="job-${idx}" class="job-select" onchange="saveData()"><option value="">職業</option>${options}</select><br><input type="text" id="id-${idx}" class="id-input" placeholder="ID" oninput="saveData()"></th>`;
         });
         headerHtml += `<th>人數</th><th class="status-cell">狀態</th>`;
         roleHeader.innerHTML = headerHtml;
+        loadData(); 
+    }
+
+    function saveData() {
+        roles.forEach((r, idx) => {
+            localStorage.setItem(`raid-job-${idx}`, document.getElementById(`job-${idx}`).value);
+            localStorage.setItem(`raid-id-${idx}`, document.getElementById(`id-${idx}`).value);
+        });
+        localStorage.setItem(`raid-startDate`, document.getElementById('startDatePicker').value);
+        localStorage.setItem(`raid-name`, document.getElementById('raidName').value);
+        localStorage.setItem(`raid-strat`, document.getElementById('stratNote').value);
+    }
+
+    function loadData() {
+        roles.forEach((r, idx) => {
+            const savedJob = localStorage.getItem(`raid-job-${idx}`);
+            const savedId = localStorage.getItem(`raid-id-${idx}`);
+            if (savedJob) document.getElementById(`job-${idx}`).value = savedJob;
+            if (savedId) document.getElementById(`id-${idx}`).value = savedId;
+        });
+        const d = localStorage.getItem(`raid-startDate`);
+        const n = localStorage.getItem(`raid-name`);
+        const s = localStorage.getItem(`raid-strat`);
+        if (d) document.getElementById('startDatePicker').value = d;
+        if (n) document.getElementById('raidName').value = n;
+        if (s) document.getElementById('stratNote').value = s;
     }
 
     function confirmUpdate() {
-        if (confirm("⚠️ 確認要更新日期嗎？\n這將會清除勾選狀態。")) {
-            generateDatesOnly();
-        }
+        if (confirm("⚠️ 警告：更新日期將會清除目前的『勾選狀態』，但會保留上面的資訊。")) { generateDatesOnly(); }
     }
     
     function generateDatesOnly() {
         const tableBody = document.getElementById('tableBody');
         const startVal = document.getElementById('startDatePicker').value;
-        
         let startDate = new Date(startVal.replace(/\//g, '-'));
-        
-        if (isNaN(startDate.getTime())) {
-            alert("請輸入正確的日期格式，例如：2026/03/28");
-            return;
-        }
-
+        if (isNaN(startDate.getTime())) { alert("請輸入正確格式，如：2026/03/28"); return; }
         tableBody.innerHTML = "";
-
         for (let i = 0; i < 7; i++) {
             let current = new Date(startDate);
             current.setDate(startDate.getDate() + i);
             let dayNames = ['日', '一', '二', '三', '四', '五', '六'];
             let isWeekend = (current.getDay() === 0 || current.getDay() === 6);
-
             let row = document.createElement('tr');
-            row.innerHTML = `
-                <td class="${isWeekend ? 'weekend' : ''}" style="font-weight:bold; white-space:nowrap;">
-                    ${current.getMonth() + 1}/${current.getDate()} (${dayNames[current.getDay()]})
-                </td>
+            row.innerHTML = `<td class="${isWeekend ? 'weekend' : ''}" style="font-weight:bold; white-space:nowrap;">${current.getMonth() + 1}/${current.getDate()} (${dayNames[current.getDay()]})</td>
                 ${roles.map((r, idx) => `<td><input type="checkbox" class="chk-row-${i}" onclick="calculate(${i})"></td>`).join('')}
                 <td><span id="count-${i}" class="count-num">0</span></td>
-                <td id="status-${i}" class="status-cell">
-                    <span class="status-fail">❌ 人數不足</span>
-                </td>
-            `;
+                <td id="status-${i}" class="status-cell"><span class="status-fail">❌ 人數不足</span></td>`;
             tableBody.appendChild(row);
             calculate(i);
         }
@@ -231,18 +133,10 @@
         const count = document.querySelectorAll(`.chk-row-${rowIndex}:checked`).length;
         document.getElementById(`count-${rowIndex}`).innerText = count;
         const statusDisplay = document.getElementById(`status-${rowIndex}`);
-
-        if (count >= 6) {
-            statusDisplay.innerHTML = `<span class="status-ok">✅ 準時開打</span>`;
-        } else {
-            statusDisplay.innerHTML = `<span class="status-fail">❌ 人數不足</span>`;
-        }
+        statusDisplay.innerHTML = count >= 6 ? `<span class="status-ok">✅ 準時開打</span>` : `<span class="status-fail">❌ 人數不足</span>`;
     }
 
-    window.onload = function() {
-        initHeader();
-        generateDatesOnly();
-    };
+    window.onload = function() { initHeader(); generateDatesOnly(); };
 </script>
 
 </body>
