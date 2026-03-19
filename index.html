@@ -41,17 +41,17 @@
         <div class="control-row">
             <div class="input-group">
                 <label>起始日期</label>
-                <input type="text" id="startDatePicker" class="text-input" value="2026/03/28" placeholder="YYYY/MM/DD" oninput="saveData()">
+                <input type="text" id="startDatePicker" class="text-input" value="2026/03/28" placeholder="YYYY/MM/DD" oninput="saveOtherInfo()">
             </div>
             <div class="input-group">
                 <label>副本名稱</label>
-                <input type="text" id="raidName" class="strategy-input" style="width: 150px;" placeholder="例如：絕神兵" oninput="saveData()">
+                <input type="text" id="raidName" class="strategy-input" style="width: 150px;" placeholder="例如：絕神兵" oninput="saveOtherInfo()">
             </div>
             <div class="input-group">
                 <label>打法備註</label>
-                <input type="text" id="stratNote" class="strategy-input" placeholder="例如：火追打法、分組減傷..." oninput="saveData()">
+                <input type="text" id="stratNote" class="strategy-input" placeholder="例如：火追打法、分組減傷..." oninput="saveOtherInfo()">
             </div>
-            <button class="btn-update" style="margin-left: auto;" onclick="confirmUpdate()">更新日期 (顯示7天)</button>
+            <button class="btn-update" style="margin-left: auto;" onclick="confirmUpdate()">更新日期 (會清空勾選)</button>
         </div>
     </div>
 
@@ -72,47 +72,70 @@
         let headerHtml = `<th>日期</th>`;
         roles.forEach((r, idx) => {
             let options = jobOptions[r.type].map(j => `<option value="${j}">${j}</option>`).join('');
-            headerHtml += `<th>${r.label}<br><select id="job-${idx}" class="job-select" onchange="saveData()"><option value="">職業</option>${options}</select><br><input type="text" id="id-${idx}" class="id-input" placeholder="ID" oninput="saveData()"></th>`;
+            headerHtml += `<th>${r.label}<br><select id="job-${idx}" class="job-select" onchange="saveMemberInfo()"><option value="">職業</option>${options}</select><br><input type="text" id="id-${idx}" class="id-input" placeholder="ID" oninput="saveMemberInfo()"></th>`;
         });
         headerHtml += `<th>人數</th><th class="status-cell">狀態</th>`;
         roleHeader.innerHTML = headerHtml;
-        loadData(); 
     }
 
-    function saveData() {
+    // 儲存成員 ID 與職業
+    function saveMemberInfo() {
         roles.forEach((r, idx) => {
             localStorage.setItem(`raid-job-${idx}`, document.getElementById(`job-${idx}`).value);
             localStorage.setItem(`raid-id-${idx}`, document.getElementById(`id-${idx}`).value);
         });
+    }
+
+    // 儲存副本、日期、打法
+    function saveOtherInfo() {
         localStorage.setItem(`raid-startDate`, document.getElementById('startDatePicker').value);
         localStorage.setItem(`raid-name`, document.getElementById('raidName').value);
         localStorage.setItem(`raid-strat`, document.getElementById('stratNote').value);
     }
 
+    // 儲存所有勾選狀態 (Checkbox)
+    function saveCheckboxes() {
+        const checks = [];
+        for(let i=0; i<7; i++) {
+            const rowChecks = Array.from(document.querySelectorAll(`.chk-row-${i}`)).map(cb => cb.checked);
+            checks.push(rowChecks);
+        }
+        localStorage.setItem('raid-checks', JSON.stringify(checks));
+    }
+
     function loadData() {
+        // 載入成員
         roles.forEach((r, idx) => {
-            const savedJob = localStorage.getItem(`raid-job-${idx}`);
-            const savedId = localStorage.getItem(`raid-id-${idx}`);
-            if (savedJob) document.getElementById(`job-${idx}`).value = savedJob;
-            if (savedId) document.getElementById(`id-${idx}`).value = savedId;
+            document.getElementById(`job-${idx}`).value = localStorage.getItem(`raid-job-${idx}`) || "";
+            document.getElementById(`id-${idx}`).value = localStorage.getItem(`raid-id-${idx}`) || "";
         });
-        const d = localStorage.getItem(`raid-startDate`);
-        const n = localStorage.getItem(`raid-name`);
-        const s = localStorage.getItem(`raid-strat`);
-        if (d) document.getElementById('startDatePicker').value = d;
-        if (n) document.getElementById('raidName').value = n;
-        if (s) document.getElementById('stratNote').value = s;
+        // 載入備註與日期
+        document.getElementById('startDatePicker').value = localStorage.getItem(`raid-startDate`) || "2026/03/28";
+        document.getElementById('raidName').value = localStorage.getItem(`raid-name`) || "";
+        document.getElementById('stratNote').value = localStorage.getItem(`raid-strat`) || "";
+        
+        generateTableContent(true); // 帶入勾選狀態載入表格
     }
 
     function confirmUpdate() {
-        if (confirm("⚠️ 警告：更新日期將會清除目前的『勾選狀態』，但會保留上面的資訊。")) { generateDatesOnly(); }
+        if (confirm("⚠️ 警告：這將會清除目前的『勾選狀態』並更新日期，但會保留 ID、職業、副本與打法。")) { 
+            localStorage.removeItem('raid-checks'); // 清除勾選存檔
+            generateTableContent(false); 
+        }
     }
     
-    function generateDatesOnly() {
+    function generateTableContent(shouldLoadChecks) {
         const tableBody = document.getElementById('tableBody');
         const startVal = document.getElementById('startDatePicker').value;
         let startDate = new Date(startVal.replace(/\//g, '-'));
-        if (isNaN(startDate.getTime())) { alert("請輸入正確格式，如：2026/03/28"); return; }
+        if (isNaN(startDate.getTime())) { alert("日期格式錯誤"); return; }
+
+        let savedChecks = [];
+        if(shouldLoadChecks) {
+            const raw = localStorage.getItem('raid-checks');
+            if(raw) savedChecks = JSON.parse(raw);
+        }
+
         tableBody.innerHTML = "";
         for (let i = 0; i < 7; i++) {
             let current = new Date(startDate);
@@ -120,13 +143,24 @@
             let dayNames = ['日', '一', '二', '三', '四', '五', '六'];
             let isWeekend = (current.getDay() === 0 || current.getDay() === 6);
             let row = document.createElement('tr');
-            row.innerHTML = `<td class="${isWeekend ? 'weekend' : ''}" style="font-weight:bold; white-space:nowrap;">${current.getMonth() + 1}/${current.getDate()} (${dayNames[current.getDay()]})</td>
-                ${roles.map((r, idx) => `<td><input type="checkbox" class="chk-row-${i}" onclick="calculate(${i})"></td>`).join('')}
+            
+            let checksHtml = roles.map((r, idx) => {
+                const isChecked = (savedChecks[i] && savedChecks[i][idx]) ? 'checked' : '';
+                return `<td><input type="checkbox" class="chk-row-${i}" ${isChecked} onclick="handleCheck(${i})"></td>`;
+            }).join('');
+
+            row.innerHTML = `<td class="${isWeekend ? 'weekend' : ''}" style="font-weight:bold;">${current.getMonth() + 1}/${current.getDate()} (${dayNames[current.getDay()]})</td>
+                ${checksHtml}
                 <td><span id="count-${i}" class="count-num">0</span></td>
-                <td id="status-${i}" class="status-cell"><span class="status-fail">❌ 人數不足</span></td>`;
+                <td id="status-${i}" class="status-cell"></td>`;
             tableBody.appendChild(row);
             calculate(i);
         }
+    }
+
+    function handleCheck(rowIndex) {
+        calculate(rowIndex);
+        saveCheckboxes(); // 每次勾選都存檔
     }
 
     function calculate(rowIndex) {
@@ -136,7 +170,10 @@
         statusDisplay.innerHTML = count >= 6 ? `<span class="status-ok">✅ 準時開打</span>` : `<span class="status-fail">❌ 人數不足</span>`;
     }
 
-    window.onload = function() { initHeader(); generateDatesOnly(); };
+    window.onload = function() { 
+        initHeader(); 
+        loadData(); 
+    };
 </script>
 
 </body>
